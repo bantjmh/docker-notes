@@ -2,11 +2,8 @@
 
 ```sudo apt-get install openssh-server```
 
- 
 
- 
-
-## 可以对 openssh server进行配置
+## 对 openssh server进行配置
 
 ```sudo vi /etc/ssh/sshd_config```
 
