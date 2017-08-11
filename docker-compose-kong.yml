@@ -1,0 +1,72 @@
+version: "3.0"
+services:
+  coredb:
+    volumes:
+    - /etc/localtime:/etc/localtime
+    - /etc/timezone:/etc/timezone
+    - kong_core_data:/var/lib/postgresql/data
+    environment:      
+      POSTGRES_DB: db_kong
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    image: postgres:latest
+    networks:
+    -  default_overlay
+  core:
+    ports:
+    - ${KONG_HTTP_PORT:-80}:8000
+    - ${KONG_SSL_PORT:-443}:8443
+    volumes:
+    - /etc/localtime:/etc/localtime
+    - /etc/timezone:/etc/timezone
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: coredb
+      KONG_PG_DATABASE: db_kong
+      KONG_PG_USER: postgres
+      KONG_PG_PASSWORD: 123456
+    networks:
+    -  default_overlay
+    image: kong:0.10.3
+    depends_on:
+      - coredb
+  web:
+    image: pantsel/konga
+    ports:
+      - ${KONG_WEB_PORT:-1337}:1337
+    networks:
+    -  default_overlay
+    volumes:
+    - /etc/localtime:/etc/localtime
+    - /etc/timezone:/etc/timezone
+    environment:
+      DB_ADAPTER: "postgres"
+      DB_HOST: "webdb"
+      DB_PORT: "5432"
+      DB_USER: "postgres"
+      DB_PASSWORD: "123456"
+      DB_DATABASE: "db_konga"
+      NODE_ENV: "development"
+    depends_on:
+      - core
+      - webdb
+  webdb:
+    image: postgres
+    networks:
+    -  default_overlay
+    volumes:
+    - /etc/localtime:/etc/localtime
+    - /etc/timezone:/etc/timezone
+    -  kong_web_data:/var/lib/postgresql/data
+    environment:      
+      POSTGRES_DB: db_konga
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+volumes:
+  kong_core_data:
+    external: true
+  kong_web_data:
+    external: true
+networks:
+  default_overlay:
+    external: true
